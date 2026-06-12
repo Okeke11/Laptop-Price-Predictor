@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Price Estimator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-color: #050508; --panel-bg: rgba(16, 18, 27, 0.85); --neon-cyan: #00f3ff; --neon-purple: #bc13fe; --text-main: #e0e6ed; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Rajdhani', sans-serif; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .container { width: 100%; max-width: 650px; background: var(--panel-bg); padding: 40px; border-radius: 16px; border: 1px solid rgba(0, 243, 255, 0.2); box-shadow: 0 0 40px rgba(0, 243, 255, 0.1); }
+        h1 { font-family: 'Orbitron', sans-serif; text-align: center; font-size: 2rem; margin-bottom: 30px; text-transform: uppercase; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 700; color: var(--neon-cyan); text-transform: uppercase; font-size: 0.9rem; }
+        select, input { width: 100%; padding: 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: white; font-size: 1.1rem; outline: none; }
+        select:focus, input:focus { border-color: var(--neon-cyan); }
+        optgroup { background: #050508; color: var(--neon-cyan); font-weight: bold; }
+        option { color: white; }
+        button { width: 100%; padding: 16px; margin-top: 20px; background: linear-gradient(45deg, var(--neon-cyan), var(--neon-purple)); border: none; border-radius: 8px; color: #fff; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: transform 0.2s, box-shadow 0.2s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(188, 19, 254, 0.4); }
+        #result-container { display: none; margin-top: 30px; text-align: center; }
+        #result { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #fff; text-shadow: 0 0 10px var(--neon-cyan); }
+        #mae { font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); margin-top: 5px; letter-spacing: 1px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hardware Value Predictor</h1>
+        <form id="predictor-form">
+            <div class="form-group">
+                <label>Manufacturer</label>
+                <select id="brand" required>
+                    <option value="" disabled selected>Select Brand</option>
+                    <option value="Apple">Apple</option>
+                    <option value="Asus">Asus</option>
+                    <option value="Acer">Acer</option>
+                    <option value="Dell">Dell</option>
+                    <option value="HP">HP</option>
+                    <option value="Lenovo">Lenovo</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Processor Architecture</label>
+                <select id="processor" required>
+                    <option value="" disabled selected>Select CPU</option>
+                    <optgroup label="Apple Silicon (SoC)">
+                        <option value="Apple M1">Apple M1</option>
+                        <option value="Apple M2">Apple M2</option>
+                        <option value="Apple M1 Max">Apple M1 Max</option>
+                        <option value="Apple M2 Max">Apple M2 Max</option>
+                    </optgroup>
+                    <optgroup label="Intel Core">
+                        <option value="11th Gen Intel Core i3">Intel Core i3 (11th Gen)</option>
+                        <option value="12th Gen Intel Core i5">Intel Core i5 (12th Gen)</option>
+                        <option value="13th Gen Intel Core i5">Intel Core i5 (13th Gen)</option>
+                        <option value="12th Gen Intel Core i7">Intel Core i7 (12th Gen)</option>
+                        <option value="13th Gen Intel Core i7">Intel Core i7 (13th Gen)</option>
+                        <option value="12th Gen Intel Core i9">Intel Core i9 (12th Gen)</option>
+                        <option value="13th Gen Intel Core i9">Intel Core i9 (13th Gen)</option>
+                    </optgroup>
+                    <optgroup label="AMD Ryzen">
+                        <option value="5th Gen AMD Ryzen 5">AMD Ryzen 5 (5000 Series)</option>
+                        <option value="7th Gen AMD Ryzen 5">AMD Ryzen 5 (7000 Series)</option>
+                        <option value="5th Gen AMD Ryzen 7">AMD Ryzen 7 (5000 Series)</option>
+                        <option value="7th Gen AMD Ryzen 7">AMD Ryzen 7 (7000 Series)</option>
+                        <option value="7th Gen AMD Ryzen 9">AMD Ryzen 9 (7000 Series)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Graphics Processing Unit</label>
+                <select id="GPU" required>
+                    <option value="" disabled selected>Select GPU</option>
+                    <optgroup label="Integrated Graphics">
+                        <option value="Intel Iris Xe">Intel Iris Xe</option>
+                        <option value="Intel UHD">Intel UHD</option>
+                        <option value="AMD Radeon">AMD Radeon Graphics</option>
+                        <option value="Apple M1">Apple Unified (M-Series)</option>
+                    </optgroup>
+                    <optgroup label="NVIDIA Dedicated">
+                        <option value="4GB NVIDIA RTX 3050">NVIDIA RTX 3050</option>
+                        <option value="6GB NVIDIA RTX 3060">NVIDIA RTX 3060</option>
+                        <option value="8GB NVIDIA RTX 4060">NVIDIA RTX 4060</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>System Memory (RAM in GB)</label>
+                <input type="number" id="Ram" required min="4" max="64" value="16">
+            </div>
+
+            <div class="form-group">
+                <label>Storage Capacity (ROM in GB)</label>
+                <input type="number" id="ROM" required min="128" max="4096" value="512">
+            </div>
+
+            <button type="submit">Initialize Prediction</button>
+        </form>
+
+        <div id="result-container">
+            <div id="result"></div>
+            <div id="mae">± ₦20,000 (Mean Absolute Error)</div>
+        </div>
+    </div>
+
+    <script>
+        const INR_TO_NGN_RATE = 18.5; // Conversion rate
+
+        // This matrix maps your clean HTML dropdown values directly to the EXACT strings found in your CSV data
+        const datasetMatcher = {
+            "Apple M1": "Apple M1",
+            "Apple M2": "Apple M2 Apple M2 Chip",
+            "Apple M1 Max": "Apple M1 Max M1 Max",
+            "Apple M2 Max": "Apple M2 Max M2 Max",
+            "11th Gen Intel Core i3": "11th Gen Intel Core i3 1115G4",
+            "12th Gen Intel Core i5": "12th Gen Intel Core i5 1235U",
+            "13th Gen Intel Core i5": "13th Gen Intel Core i5 1335U",
+            "12th Gen Intel Core i7": "12th Gen Intel Core i7 1255U",
+            "13th Gen Intel Core i7": "13th Gen Intel Core i7 1355U",
+            "12th Gen Intel Core i9": "12th Gen Intel Core i9 12900H",
+            "13th Gen Intel Core i9": "13th Gen Intel Core i9 13900H",
+            "5th Gen AMD Ryzen 5": "5th Gen AMD Ryzen 5 5500U",
+            "7th Gen AMD Ryzen 5": "7th Gen AMD Ryzen 5 7520U",
+            "5th Gen AMD Ryzen 7": "5th Gen AMD Ryzen 7  5700U",
+            "7th Gen AMD Ryzen 7": "7th Gen AMD Ryzen 7 7730U",
+            "7th Gen AMD Ryzen 9": "7th Gen AMD Ryzen 9 7940HS"
+        };
+
+        document.getElementById('predictor-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.querySelector('button');
+            const resultContainer = document.getElementById('result-container');
+            const resultDiv = document.getElementById('result');
+            
+            btn.innerText = 'Calculating Matrix...';
+            resultContainer.style.display = 'none';
+            
+            // Grab the clean processor value from the dropdown
+            const rawProcessor = document.getElementById('processor').value;
+            // Map it to the messy dataset string so the Random Forest model doesn't ignore it
+            const matchedProcessor = datasetMatcher[rawProcessor] || rawProcessor;
+
+            const payload = {
+                brand: document.getElementById('brand').value,
+                processor: matchedProcessor,
+                GPU: document.getElementById('GPU').value,
+                Ram: parseInt(document.getElementById('Ram').value),
+                ROM: parseInt(document.getElementById('ROM').value)
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                // Convert Rupee to Naira
+                const priceInNaira = data.predicted_price * INR_TO_NGN_RATE;
+                
+                btn.innerText = 'Initialize Prediction';
+                resultDiv.innerText = `₦${priceInNaira.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
+                resultContainer.style.display = 'block';
+
+            } catch (error) {
+                btn.innerText = 'System Failure';
+                setTimeout(() => btn.innerText = 'Initialize Prediction', 2000);
+            }
+        });
+    </script>
+</body>
+</html>
