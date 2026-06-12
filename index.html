@@ -22,6 +22,9 @@
         #result-container { display: none; margin-top: 30px; text-align: center; }
         #result { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #fff; text-shadow: 0 0 10px var(--neon-cyan); }
         #mae { font-family: 'Rajdhani', sans-serif; font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); margin-top: 5px; letter-spacing: 1px; text-transform: uppercase; }
+        
+        /* Utility class to hide elements natively */
+        .hidden-option { display: none; }
     </style>
 </head>
 <body>
@@ -45,7 +48,7 @@
                 <label>Processor Architecture</label>
                 <select id="processor" required>
                     <option value="" disabled selected>Select CPU</option>
-                    <optgroup label="Apple Silicon (SoC)">
+                    <optgroup id="apple-cpu-group" label="Apple Silicon (SoC)">
                         <option value="Apple M1">Apple M1</option>
                         <option value="Apple M2">Apple M2</option>
                         <option value="Apple M1 Max">Apple M1 Max</option>
@@ -75,10 +78,10 @@
                 <select id="GPU" required>
                     <option value="" disabled selected>Select GPU</option>
                     <optgroup label="Integrated Graphics">
+                        <option id="apple-gpu-option" value="Apple M1">Apple Unified (M-Series)</option>
                         <option value="Intel Iris Xe">Intel Iris Xe</option>
                         <option value="Intel UHD">Intel UHD</option>
                         <option value="AMD Radeon">AMD Radeon Graphics</option>
-                        <option value="Apple M1">Apple Unified (M-Series)</option>
                     </optgroup>
                     <optgroup label="NVIDIA Dedicated">
                         <option value="4GB NVIDIA RTX 3050">NVIDIA RTX 3050</option>
@@ -108,9 +111,41 @@
     </div>
 
     <script>
-        const INR_TO_NGN_RATE = 18.5; // Conversion rate
+        const INR_TO_NGN_RATE = 18.5; 
 
-        // This matrix maps your clean HTML dropdown values directly to the EXACT strings found in your CSV data
+        // Dynamic Hardware Logic
+        document.getElementById('brand').addEventListener('change', function() {
+            const selectedBrand = this.value;
+            const appleCpuGroup = document.getElementById('apple-cpu-group');
+            const appleGpuOption = document.getElementById('apple-gpu-option');
+            const processorSelect = document.getElementById('processor');
+            const gpuSelect = document.getElementById('GPU');
+
+            if (selectedBrand === 'Apple') {
+                // Unlock Apple components
+                appleCpuGroup.disabled = false;
+                appleCpuGroup.classList.remove('hidden-option');
+                appleGpuOption.disabled = false;
+                appleGpuOption.classList.remove('hidden-option');
+            } else {
+                // Lock Apple components for all other brands
+                appleCpuGroup.disabled = true;
+                appleCpuGroup.classList.add('hidden-option');
+                appleGpuOption.disabled = true;
+                appleGpuOption.classList.add('hidden-option');
+
+                // Safety feature: If they selected an Apple chip and then switched the brand to Dell, 
+                // this automatically resets the dropdown so they don't submit an invalid form.
+                if (processorSelect.value.includes('Apple')) {
+                    processorSelect.value = ''; 
+                }
+                if (gpuSelect.value === 'Apple M1') {
+                    gpuSelect.value = '';
+                }
+            }
+        });
+
+        // Dataset Matcher
         const datasetMatcher = {
             "Apple M1": "Apple M1",
             "Apple M2": "Apple M2 Apple M2 Chip",
@@ -130,6 +165,7 @@
             "7th Gen AMD Ryzen 9": "7th Gen AMD Ryzen 9 7940HS"
         };
 
+        // Form Submission Logic
         document.getElementById('predictor-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.querySelector('button');
@@ -139,9 +175,7 @@
             btn.innerText = 'Calculating Matrix...';
             resultContainer.style.display = 'none';
             
-            // Grab the clean processor value from the dropdown
             const rawProcessor = document.getElementById('processor').value;
-            // Map it to the messy dataset string so the Random Forest model doesn't ignore it
             const matchedProcessor = datasetMatcher[rawProcessor] || rawProcessor;
 
             const payload = {
@@ -161,7 +195,6 @@
                 
                 const data = await response.json();
                 
-                // Convert Rupee to Naira
                 const priceInNaira = data.predicted_price * INR_TO_NGN_RATE;
                 
                 btn.innerText = 'Initialize Prediction';
