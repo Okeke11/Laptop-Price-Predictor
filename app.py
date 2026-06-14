@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
@@ -36,19 +36,16 @@ model = Pipeline(steps=[
 model.fit(X, y)
 print("Model trained and API ready!")
 
-# 2. Create the Route to receive HTML data
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+# EXISTING ROUTE: This handles the math
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Get JSON data from the HTML form
     data = request.get_json()
-    
-    # Convert it to a Pandas DataFrame
     custom_laptop = pd.DataFrame([data])
-    
-    # Make the prediction
     prediction = model.predict(custom_laptop)[0]
-    
-    # Send it back to the HTML page
     return jsonify({'predicted_price': round(prediction, 2)})
 
 if __name__ == '__main__':
