@@ -2,6 +2,7 @@
 
 An end-to-end Machine Learning pipeline designed to estimate the market value of laptops based on core hardware specifications. This project processes categorical and numerical hardware data to output an accurate, continuous price prediction using an ensemble learning approach.
 
+##LIVE @ [Laptop Price Predictor](https://laptop-price-predictor-0n9e.onrender.com/)
 ---
 
 ## 🚀 Features
